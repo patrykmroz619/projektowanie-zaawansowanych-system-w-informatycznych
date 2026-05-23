@@ -34,10 +34,8 @@ export default function LoginPage() {
           </h1>
         </div>
 
-        {/* Form card */}
         <div className="bg-card border border-border rounded-xl p-8 shadow-sm space-y-5">
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
-            {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -53,7 +51,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <Label htmlFor="password">Hasło</Label>
               <div className="relative">
@@ -83,7 +80,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Error message */}
             {error && (
               <p
                 id="form-error"
@@ -104,7 +100,6 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Register link */}
         <p className="text-center text-sm text-muted-foreground">
           Nie masz konta?{" "}
           <Link

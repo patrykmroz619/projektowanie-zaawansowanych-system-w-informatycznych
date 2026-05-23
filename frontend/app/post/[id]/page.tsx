@@ -77,12 +77,10 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
   });
   const wasEdited = post.createdAt !== post.updatedAt;
 
-  // Format paragraphs for display
   const paragraphs = post.content.split(/\n\n+/).filter(Boolean);
 
   return (
     <article className="max-w-3xl mx-auto">
-      {/* Back link */}
       <div className="mb-8">
         <Link
           href="/"
@@ -93,7 +91,6 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
         </Link>
       </div>
 
-      {/* Post header */}
       <header className="mb-8 pb-8 border-b border-border">
         <div className="mb-4">
           <CategoryBadge category={post.category} />
@@ -103,7 +100,6 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
         </h1>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Meta */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <User className="h-4 w-4" aria-hidden="true" />
@@ -125,12 +121,10 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
             )}
           </div>
 
-          {/* Author actions */}
           <PostActions post={post} />
         </div>
       </header>
 
-      {/* Post body */}
       <div className="prose-like space-y-5 text-foreground">
         {paragraphs.map((para, idx) => (
           <p key={idx} className="text-[1.0625rem] leading-[1.75] text-foreground/90">
@@ -139,7 +133,6 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
         ))}
       </div>
 
-      {/* Comments */}
       <CommentsSection postId={id} initialComments={comments} />
     </article>
   );

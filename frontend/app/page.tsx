@@ -37,7 +37,6 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Hero Section */}
       <section className="mb-12 text-center">
         <h1 className="text-4xl sm:text-5xl font-bold text-foreground font-serif mb-4 text-balance">
           Witamy na naszym blogu!
@@ -47,9 +46,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* Search & Filter Bar */}
       <div className="mb-8 space-y-4">
-        {/* Search Input */}
         <div className="relative max-w-lg mx-auto">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
@@ -64,7 +61,6 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Category Filter */}
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="text-sm font-medium text-muted-foreground mr-1">
             Filtr:
@@ -89,7 +85,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Results Info */}
       <div className="mb-6 text-center">
         <p className="text-sm text-muted-foreground">
           {filteredPosts.length === 0 ? (
@@ -102,7 +97,6 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Posts Grid */}
       {filteredPosts.length > 0 && (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {filteredPosts.map((post) => {

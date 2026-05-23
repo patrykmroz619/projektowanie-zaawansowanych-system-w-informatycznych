@@ -75,7 +75,6 @@ export function PostActions({ post }: PostActionsProps) {
 
   return (
     <>
-      {/* Action Buttons */}
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={openEdit} className="gap-1.5">
           <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
@@ -92,7 +91,6 @@ export function PostActions({ post }: PostActionsProps) {
         </Button>
       </div>
 
-      {/* ---- Edit Modal ---- */}
       {editOpen && (
         <div
           role="dialog"
@@ -100,16 +98,13 @@ export function PostActions({ post }: PostActionsProps) {
           aria-labelledby="edit-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
             onClick={() => setEditOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Panel */}
           <div className="relative bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8">
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2
                 id="edit-modal-title"
@@ -127,7 +122,6 @@ export function PostActions({ post }: PostActionsProps) {
             </div>
 
             <div className="space-y-5">
-              {/* Title */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="edit-title"
@@ -146,7 +140,6 @@ export function PostActions({ post }: PostActionsProps) {
                 )}
               </div>
 
-              {/* Category */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="edit-category"
@@ -188,7 +181,6 @@ export function PostActions({ post }: PostActionsProps) {
                 </div>
               </div>
 
-              {/* Content */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="edit-content"
@@ -212,7 +204,6 @@ export function PostActions({ post }: PostActionsProps) {
                 )}
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-3 pt-1">
                 <Button
                   onClick={handleSave}
@@ -234,7 +225,6 @@ export function PostActions({ post }: PostActionsProps) {
         </div>
       )}
 
-      {/* ---- Delete Confirm Modal ---- */}
       {deleteOpen && (
         <div
           role="dialog"
@@ -242,14 +232,12 @@ export function PostActions({ post }: PostActionsProps) {
           aria-labelledby="delete-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
             onClick={() => setDeleteOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Panel */}
           <div className="relative bg-card border border-border rounded-xl shadow-2xl w-full max-w-sm p-6">
             <div className="flex flex-col items-center text-center gap-4">
               <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">

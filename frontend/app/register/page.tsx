@@ -14,7 +14,6 @@ const PASSWORD_RULES = [
 ];
 
 export default function RegisterPage() {
-
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -35,24 +34,21 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    
+
     // registration logic here
   }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-sm space-y-8">
-        {/* Brand mark */}
         <div className="text-center">
           <h1 className="font-serif text-2xl font-semibold text-foreground tracking-tight">
             Stwórz konto
           </h1>
         </div>
 
-        {/* Form card */}
         <div className="bg-card border border-border rounded-xl p-8 shadow-sm space-y-5">
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
-            {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -67,7 +63,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Username */}
             <div className="space-y-1.5">
               <Label htmlFor="username">Nazwa użytkownika</Label>
               <Input
@@ -76,9 +71,7 @@ export default function RegisterPage() {
                 autoComplete="username"
                 placeholder="jan.kowalski"
                 value={username}
-                onChange={(e) =>
-                  setUsername(e.target.value.replace(/\s/g, ""))
-                }
+                onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
                 required
                 disabled={loading}
                 minLength={3}
@@ -86,7 +79,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <Label htmlFor="password">Hasło</Label>
               <div className="relative">
@@ -117,7 +109,6 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Password requirements */}
               {(passwordFocused || password.length > 0) && (
                 <ul
                   id="password-requirements"
@@ -130,13 +121,21 @@ export default function RegisterPage() {
                       <li
                         key={rule.label}
                         className={`flex items-center gap-2 text-xs transition-colors ${
-                          met ? "text-[oklch(0.58_0.18_145)]" : "text-muted-foreground"
+                          met
+                            ? "text-[oklch(0.58_0.18_145)]"
+                            : "text-muted-foreground"
                         }`}
                       >
                         {met ? (
-                          <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <Check
+                            className="h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
                         ) : (
-                          <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <X
+                            className="h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
                         )}
                         {rule.label}
                       </li>
@@ -146,7 +145,6 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Error message */}
             {error && (
               <p
                 role="alert"
@@ -159,16 +157,21 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || !email || !username || username.length < 3 || !password}
+              disabled={
+                loading ||
+                !email ||
+                !username ||
+                username.length < 3 ||
+                !password
+              }
             >
               {loading ? "Tworzenie konta..." : "Utwórz konto"}
             </Button>
           </form>
         </div>
 
-        {/* Login link */}
         <p className="text-center text-sm text-muted-foreground">
-         Już masz konto?{" "}
+          Już masz konto?{" "}
           <Link
             href="/login"
             className="text-accent font-medium hover:underline underline-offset-4"

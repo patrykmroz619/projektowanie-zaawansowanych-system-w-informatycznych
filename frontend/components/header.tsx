@@ -11,7 +11,6 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-2 text-foreground hover:text-accent transition-colors"
@@ -22,7 +21,6 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Nav */}
         <nav className="flex items-center gap-1" aria-label="Main navigation">
           <Link
             href="/"

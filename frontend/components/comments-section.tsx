@@ -63,7 +63,6 @@ export function CommentsSection({
         </h2>
       </div>
 
-      {/* Comment List */}
       {comments.length > 0 ? (
         <ol className="space-y-5 mb-10">
           {comments.map((comment) => {
@@ -78,7 +77,6 @@ export function CommentsSection({
                 key={comment.id}
                 className="flex gap-3 bg-card border border-border rounded-lg p-4"
               >
-                {/* Avatar */}
                 <div className="shrink-0 h-9 w-9 rounded-full bg-secondary border border-border flex items-center justify-center">
                   <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 </div>
@@ -114,13 +112,11 @@ export function CommentsSection({
         </div>
       )}
 
-      {/* Add Comment Form */}
       <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
         <h3 className="text-base font-semibold text-foreground mb-5">
           Zostaw komentarz
         </h3>
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          {/* Name */}
           <div className="space-y-1.5">
             <label
               htmlFor="comment-author"
@@ -148,7 +144,6 @@ export function CommentsSection({
             )}
           </div>
 
-          {/* Comment */}
           <div className="space-y-1.5">
             <label
               htmlFor="comment-content"

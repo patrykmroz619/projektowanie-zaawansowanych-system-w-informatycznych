@@ -52,7 +52,6 @@ export default function CreatePostPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Back link */}
       <div className="mb-8">
         <Link
           href="/"
@@ -63,7 +62,6 @@ export default function CreatePostPage() {
         </Link>
       </div>
 
-      {/* Page heading */}
       <div className="mb-8 flex items-center gap-3">
         <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
           <PenSquare className="h-5 w-5 text-accent" aria-hidden="true" />
@@ -78,10 +76,8 @@ export default function CreatePostPage() {
         </div>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} noValidate>
         <div className="space-y-6 bg-card border border-border rounded-xl p-6 sm:p-8">
-          {/* Title */}
           <div className="space-y-1.5">
             <label
               htmlFor="title"
@@ -113,7 +109,6 @@ export default function CreatePostPage() {
             </div>
           </div>
 
-          {/* Category */}
           <div className="space-y-1.5">
             <label
               htmlFor="category"
@@ -153,7 +148,6 @@ export default function CreatePostPage() {
             </div>
           </div>
 
-          {/* Content */}
           <div className="space-y-1.5">
             <label
               htmlFor="content"
@@ -181,7 +175,6 @@ export default function CreatePostPage() {
             )}
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
             <Button
               type="submit"
