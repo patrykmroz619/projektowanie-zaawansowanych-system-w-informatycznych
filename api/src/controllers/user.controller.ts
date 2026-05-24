@@ -2,6 +2,26 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
 import { User, UserRole } from "../entities/User";
 
+export const getMe = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const user = await AppDataSource.getRepository(User).findOneBy({ id: req.userId });
+        if (!user) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+        res.status(200).json({
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            createdAt: user.createdAt,
+        });
+    } catch (error) {
+        console.error("Get me error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 const userRepository = () => AppDataSource.getRepository(User);
 
 export const updateRole = async (req: Request, res: Response): Promise<void> => {

@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, BookOpen, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api";
+import * as api from "@/lib/api";
 
 const PASSWORD_RULES = [
   { label: "Minimum 8 znaków", test: (p: string) => p.length >= 8 },
@@ -14,6 +18,8 @@ const PASSWORD_RULES = [
 ];
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +41,14 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    // registration logic here
+    try {
+      await api.register(email, username, password);
+      await login(email, password);
+      router.push("/");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Wystąpił błąd. Spróbuj ponownie.");
+      setLoading(false);
+    }
   }
 
   return (

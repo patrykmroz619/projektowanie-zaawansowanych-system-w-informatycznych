@@ -7,9 +7,12 @@ import { Eye, EyeOff, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +25,13 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    // login logic here
+    try {
+      await login(email, password);
+      router.push("/");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Wystąpił błąd. Spróbuj ponownie.");
+      setLoading(false);
+    }
   }
 
   return (

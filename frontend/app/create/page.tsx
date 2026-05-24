@@ -1,32 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { savePost } from "@/lib/store";
-import { CATEGORIES, Category } from "@/lib/types";
+import { createArticle, fetchTags, createTag, ApiError } from "@/lib/api";
+import type { ApiTag } from "@/lib/api-types";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, PenSquare } from "lucide-react";
+import { ArrowLeft, PenSquare, Plus } from "lucide-react";
 
 export default function CreatePostPage() {
   const router = useRouter();
+  const { isAdmin, isLoading } = useAuth();
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<Category>("Tech");
   const [content, setContent] = useState("");
+  const [tagIds, setTagIds] = useState<number[]>([]);
+  const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagError, setNewTagError] = useState<string | null>(null);
+  const [creatingTag, setCreatingTag] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchTags()
+      .then(setAvailableTags)
+      .catch(() => {});
+  }, []);
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-20">
+        <h1 className="text-2xl font-bold font-serif text-foreground mb-3">
+          Brak dostępu
+        </h1>
+        <p className="text-muted-foreground mb-6">
+          Tylko administratorzy mogą tworzyć nowe posty.
+        </p>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Wróć do listy postów
+        </Link>
+      </div>
+    );
+  }
 
   function validate() {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = "Tytuł jest wymagany.";
-    else if (title.length > 120) newErrors.title = "Tytuł musi zawierać maksymalnie 120 znaków.";
+    else if (title.length > 120)
+      newErrors.title = "Tytuł musi zawierać maksymalnie 120 znaków.";
     if (!content.trim()) newErrors.content = "Treść jest wymagana.";
-    else if (content.trim().length < 30) newErrors.content = "Treść musi zawierać co najmniej 30 znaków.";
+    else if (content.trim().length < 30)
+      newErrors.content = "Treść musi zawierać co najmniej 30 znaków.";
     return newErrors;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function toggleTag(id: number) {
+    setTagIds((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  }
+
+  async function handleCreateTag() {
+    const name = newTagName.trim();
+    if (!name) {
+      setNewTagError("Nazwa tagu jest wymagana.");
+      return;
+    }
+    setNewTagError(null);
+    setCreatingTag(true);
+    try {
+      const tag = await createTag(name);
+      setAvailableTags((prev) => [...prev, tag]);
+      setTagIds((prev) => [...prev, tag.id]);
+      setNewTagName("");
+    } catch (err) {
+      setNewTagError(
+        err instanceof ApiError ? err.message : "Nie udało się utworzyć tagu."
+      );
+    } finally {
+      setCreatingTag(false);
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -34,20 +101,22 @@ export default function CreatePostPage() {
       return;
     }
     setErrors({});
+    setSubmitError(null);
     setSubmitting(true);
 
-    const excerpt =
-      content.trim().slice(0, 180) + (content.trim().length > 180 ? "..." : "");
-
-    savePost({
-      title: title.trim(),
-      category,
-      content: content.trim(),
-      excerpt,
-      author: "You",
-    });
-
-    router.push("/");
+    try {
+      await createArticle({
+        title: title.trim(),
+        content: content.trim(),
+        tagIds,
+      });
+      router.push("/");
+    } catch (err) {
+      setSubmitError(
+        err instanceof ApiError ? err.message : "Wystąpił błąd. Spróbuj ponownie."
+      );
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -70,9 +139,7 @@ export default function CreatePostPage() {
           <h1 className="text-2xl font-bold font-serif text-foreground">
             Nowy post
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Udostępnij swoje pomysły.
-          </p>
+          <p className="text-sm text-muted-foreground">Udostępnij swoje pomysły.</p>
         </div>
       </div>
 
@@ -91,13 +158,21 @@ export default function CreatePostPage() {
               placeholder="Wprowadź tytuł posta"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className={errors.title ? "border-destructive focus-visible:ring-destructive" : ""}
+              className={
+                errors.title
+                  ? "border-destructive focus-visible:ring-destructive"
+                  : ""
+              }
               aria-describedby={errors.title ? "title-error" : undefined}
               maxLength={120}
             />
             <div className="flex justify-between items-center">
               {errors.title ? (
-                <p id="title-error" className="text-xs text-destructive" role="alert">
+                <p
+                  id="title-error"
+                  className="text-xs text-destructive"
+                  role="alert"
+                >
                   {errors.title}
                 </p>
               ) : (
@@ -109,43 +184,63 @@ export default function CreatePostPage() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="category"
-              className="block text-sm font-semibold text-foreground"
-            >
-              Kategoria <span className="text-destructive">*</span>
-            </label>
-            <div className="relative">
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as Category)}
-                className="w-full h-10 pl-3 pr-8 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none cursor-pointer"
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
+          <div className="space-y-3">
+            <span className="block text-sm font-semibold text-foreground">
+              Tagi
+            </span>
+            {availableTags.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {availableTags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className="flex items-center gap-1.5 cursor-pointer text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={tagIds.includes(tag.id)}
+                      onChange={() => toggleTag(tag.id)}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    {tag.name}
+                  </label>
                 ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg
-                  className="h-4 w-4 text-muted-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
               </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Input
+                type="text"
+                placeholder="Nowy tag..."
+                value={newTagName}
+                onChange={(e) => {
+                  setNewTagName(e.target.value);
+                  setNewTagError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateTag();
+                  }
+                }}
+                className={`max-w-[200px] ${newTagError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                disabled={creatingTag}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={creatingTag}
+                onClick={handleCreateTag}
+                className="gap-1.5"
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                {creatingTag ? "Dodawanie..." : "Dodaj tag"}
+              </Button>
             </div>
+            {newTagError && (
+              <p className="text-xs text-destructive" role="alert">
+                {newTagError}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -169,11 +264,21 @@ export default function CreatePostPage() {
               aria-describedby={errors.content ? "content-error" : undefined}
             />
             {errors.content && (
-              <p id="content-error" className="text-xs text-destructive" role="alert">
+              <p
+                id="content-error"
+                className="text-xs text-destructive"
+                role="alert"
+              >
                 {errors.content}
               </p>
             )}
           </div>
+
+          {submitError && (
+            <p className="text-sm text-destructive bg-destructive/8 border border-destructive/20 rounded-md px-3 py-2">
+              {submitError}
+            </p>
+          )}
 
           <div className="flex items-center gap-3 pt-2">
             <Button

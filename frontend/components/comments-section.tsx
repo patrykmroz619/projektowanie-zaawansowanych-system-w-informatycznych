@@ -1,65 +1,64 @@
 "use client";
 
 import { useState } from "react";
-import { Comment } from "@/lib/types";
-import { addComment } from "@/lib/store";
+import Link from "next/link";
+import type { Comment } from "@/lib/types";
+import { addComment, ApiError } from "@/lib/api";
+import { mapApiCommentToComment } from "@/lib/mappers";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MessageSquare, User } from "lucide-react";
 
 interface CommentsSectionProps {
   postId: string;
+  articleId: number;
   initialComments: Comment[];
 }
 
 export function CommentsSection({
   postId,
+  articleId,
   initialComments,
 }: CommentsSectionProps) {
+  const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>(initialComments);
-  const [author, setAuthor] = useState("");
   const [content, setContent] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function validate() {
-    const errs: Record<string, string> = {};
-    if (!author.trim()) errs.author = "Name is required.";
-    if (!content.trim()) errs.content = "Comment cannot be empty.";
-    else if (content.trim().length < 5)
-      errs.content = "Comment must be at least 5 characters.";
-    return errs;
-  }
-
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
+    if (!content.trim() || content.trim().length < 5) {
+      setError("Komentarz musi zawierać co najmniej 5 znaków.");
       return;
     }
-    setErrors({});
+    setError(null);
     setSubmitting(true);
-    const newComment = addComment({
-      postId,
-      author: author.trim(),
-      content: content.trim(),
-    });
-    setComments((prev) => [...prev, newComment]);
-    setAuthor("");
-    setContent("");
-    setSubmitting(false);
+    try {
+      const apiComment = await addComment(articleId, content.trim());
+      const newComment = mapApiCommentToComment(apiComment, articleId);
+      setComments((prev) => [...prev, newComment]);
+      setContent("");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Błąd podczas dodawania komentarza.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
-    <section aria-labelledby="comments-heading" className="mt-12 pt-10 border-t border-border">
+    <section
+      aria-labelledby="comments-heading"
+      className="mt-12 pt-10 border-t border-border"
+    >
       <div className="flex items-center gap-2 mb-8">
         <MessageSquare className="h-5 w-5 text-accent" aria-hidden="true" />
         <h2
           id="comments-heading"
           className="text-xl font-bold font-serif text-foreground"
         >
-          {comments.length} {comments.length === 1 ? "Komentarz" : "Komentarze"}
+          {comments.length}{" "}
+          {comments.length === 1 ? "Komentarz" : "Komentarze"}
         </h2>
       </div>
 
@@ -112,72 +111,56 @@ export function CommentsSection({
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
-        <h3 className="text-base font-semibold text-foreground mb-5">
-          Zostaw komentarz
-        </h3>
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="comment-author"
-              className="block text-sm font-medium text-foreground"
-            >
-              Twoje Imię <span className="text-destructive">*</span>
-            </label>
-            <Input
-              id="comment-author"
-              type="text"
-              placeholder="np. Jan Kowalski"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              className={errors.author ? "border-destructive" : ""}
-              aria-describedby={errors.author ? "comment-author-error" : undefined}
-            />
-            {errors.author && (
-              <p
-                id="comment-author-error"
-                className="text-xs text-destructive"
-                role="alert"
+      {user ? (
+        <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
+          <h3 className="text-base font-semibold text-foreground mb-5">
+            Zostaw komentarz
+          </h3>
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="comment-content"
+                className="block text-sm font-medium text-foreground"
               >
-                {errors.author}
-              </p>
-            )}
-          </div>
+                Komentarz <span className="text-destructive">*</span>
+              </label>
+              <textarea
+                id="comment-content"
+                rows={4}
+                placeholder="Podziel się swoimi myślami..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className={`w-full resize-none rounded-md border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed ${
+                  error ? "border-destructive" : "border-input"
+                }`}
+                aria-describedby={error ? "comment-error" : undefined}
+              />
+              {error && (
+                <p
+                  id="comment-error"
+                  className="text-xs text-destructive"
+                  role="alert"
+                >
+                  {error}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="comment-content"
-              className="block text-sm font-medium text-foreground"
-            >
-              Komentarz <span className="text-destructive">*</span>
-            </label>
-            <textarea
-              id="comment-content"
-              rows={4}
-              placeholder="Podziel się swoimi myślami..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className={`w-full resize-none rounded-md border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed ${
-                errors.content ? "border-destructive" : "border-input"
-              }`}
-              aria-describedby={errors.content ? "comment-content-error" : undefined}
-            />
-            {errors.content && (
-              <p
-                id="comment-content-error"
-                className="text-xs text-destructive"
-                role="alert"
-              >
-                {errors.content}
-              </p>
-            )}
-          </div>
-
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Publikowanie..." : "Opublikuj Komentarz"}
-          </Button>
-        </form>
-      </div>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Publikowanie..." : "Opublikuj Komentarz"}
+            </Button>
+          </form>
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-xl p-5 sm:p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            <Link href="/login" className="text-accent font-medium hover:underline">
+              Zaloguj się
+            </Link>
+            , aby dodać komentarz.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

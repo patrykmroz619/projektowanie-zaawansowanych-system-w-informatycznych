@@ -1,82 +1,110 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Post } from "@/lib/types";
-import { CATEGORIES, Category } from "@/lib/types";
-import { updatePost, deletePost } from "@/lib/store";
-import { CategoryBadge } from "@/components/category-badge";
+import { updateArticle, deleteArticle, fetchTags, ApiError } from "@/lib/api";
+import type { ApiTag } from "@/lib/api-types";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, X, Check, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Pencil, Trash2, X, Check, AlertTriangle } from "lucide-react";
 
 interface PostActionsProps {
   post: Post;
+  articleId: number;
 }
 
-export function PostActions({ post }: PostActionsProps) {
+export function PostActions({ post, articleId }: PostActionsProps) {
   const router = useRouter();
+  const { isAdmin } = useAuth();
 
-  // Edit state
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(post.title);
-  const [editCategory, setEditCategory] = useState<Category>(post.category);
   const [editContent, setEditContent] = useState(post.content);
+  const [editTagIds, setEditTagIds] = useState<number[]>([]);
+  const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Delete confirm state
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function openEdit() {
     setEditTitle(post.title);
-    setEditCategory(post.category);
     setEditContent(post.content);
     setEditErrors({});
+    setSaveError(null);
     setEditOpen(true);
+    fetchTags().then((tags) => {
+      setAvailableTags(tags);
+      const currentTagName = post.category;
+      const matched = tags.find((t) => t.name === currentTagName);
+      setEditTagIds(matched ? [matched.id] : []);
+    });
   }
 
   function validateEdit() {
     const errs: Record<string, string> = {};
-    if (!editTitle.trim()) errs.title = "Title is required.";
-    if (!editContent.trim()) errs.content = "Content is required.";
+    if (!editTitle.trim()) errs.title = "Tytuł jest wymagany.";
+    if (!editContent.trim()) errs.content = "Treść jest wymagana.";
     return errs;
   }
 
-  function handleSave() {
+  async function handleSave() {
     const errs = validateEdit();
     if (Object.keys(errs).length > 0) {
       setEditErrors(errs);
       return;
     }
     setSaving(true);
-    const excerpt =
-      editContent.trim().slice(0, 180) +
-      (editContent.trim().length > 180 ? "..." : "");
-    updatePost(post.id, {
-      title: editTitle.trim(),
-      category: editCategory,
-      content: editContent.trim(),
-      excerpt,
-    });
-    // Force a page reload to reflect changes
-    router.refresh();
-    setEditOpen(false);
-    setSaving(false);
+    setSaveError(null);
+    try {
+      await updateArticle(articleId, {
+        title: editTitle.trim(),
+        content: editContent.trim(),
+        tagIds: editTagIds,
+      });
+      setEditOpen(false);
+      router.refresh();
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Błąd zapisu.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     setDeleting(true);
-    deletePost(post.id);
-    router.push("/");
+    setDeleteError(null);
+    try {
+      await deleteArticle(articleId);
+      router.push("/");
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : "Błąd usuwania.");
+      setDeleting(false);
+    }
   }
+
+  function toggleTag(id: number) {
+    setEditTagIds((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  }
+
+  if (!isAdmin) return null;
 
   return (
     <>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={openEdit} className="gap-1.5">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={openEdit}
+          className="gap-1.5"
+        >
           <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
           Edytuj
         </Button>
@@ -140,46 +168,29 @@ export function PostActions({ post }: PostActionsProps) {
                 )}
               </div>
 
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="edit-category"
-                  className="block text-sm font-semibold text-foreground"
-                >
-                  Kategoria
-                </label>
-                <div className="relative">
-                  <select
-                    id="edit-category"
-                    value={editCategory}
-                    onChange={(e) =>
-                      setEditCategory(e.target.value as Category)
-                    }
-                    className="w-full h-10 pl-3 pr-8 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
+              {availableTags.length > 0 && (
+                <div className="space-y-2">
+                  <span className="block text-sm font-semibold text-foreground">
+                    Tagi
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {availableTags.map((tag) => (
+                      <label
+                        key={tag.id}
+                        className="flex items-center gap-1.5 cursor-pointer text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={editTagIds.includes(tag.id)}
+                          onChange={() => toggleTag(tag.id)}
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        {tag.name}
+                      </label>
                     ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                    <svg
-                      className="h-4 w-4 text-muted-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-1.5">
                 <label
@@ -204,6 +215,12 @@ export function PostActions({ post }: PostActionsProps) {
                 )}
               </div>
 
+              {saveError && (
+                <p className="text-sm text-destructive bg-destructive/8 border border-destructive/20 rounded-md px-3 py-2">
+                  {saveError}
+                </p>
+              )}
+
               <div className="flex items-center gap-3 pt-1">
                 <Button
                   onClick={handleSave}
@@ -213,10 +230,7 @@ export function PostActions({ post }: PostActionsProps) {
                   <Check className="h-4 w-4" aria-hidden="true" />
                   {saving ? "Zapisywanie..." : "Zapisz Zmiany"}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setEditOpen(false)}
-                >
+                <Button variant="outline" onClick={() => setEditOpen(false)}>
                   Anuluj
                 </Button>
               </div>
@@ -254,9 +268,13 @@ export function PostActions({ post }: PostActionsProps) {
                   Usunąć post?
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Nie można cofnąć tej akcji. Czy na pewno chcesz usunąć ten post?
+                  Nie można cofnąć tej akcji. Czy na pewno chcesz usunąć ten
+                  post?
                 </p>
               </div>
+              {deleteError && (
+                <p className="text-sm text-destructive">{deleteError}</p>
+              )}
               <div className="flex gap-3 w-full">
                 <Button
                   className="flex-1"

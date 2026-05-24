@@ -3,7 +3,10 @@
     "allow": [
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
-      "Bash(npm init:*)"
+      "Bash(npm init:*)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\patry\\\\Documents\\\\studia\\\\projektowanie-zaawansowanych-systemow-informatycznych\" -Directory)",
+      "Bash(Select-Object Name)",
+      "PowerShell(ls \"C:\\\\Users\\\\patry\\\\Documents\\\\studia\\\\projektowanie-zaawansowanych-systemow-informatycznych\\\\frontend\" -Recurse -File | Select-Object FullName | Where-Object { $_.FullName -notmatch \"node_modules|\\\\.next\" })"
     ]
   }
 }

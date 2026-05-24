@@ -2,9 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { getPost, getComments } from "@/lib/store";
-import { Post } from "@/lib/types";
-import { Comment } from "@/lib/types";
+import { fetchArticle } from "@/lib/api";
+import { mapArticleToPost, mapApiCommentToComment } from "@/lib/mappers";
+import type { Post, Comment } from "@/lib/types";
+import type { ApiArticle } from "@/lib/api-types";
 import { CategoryBadge } from "@/components/category-badge";
 import { PostActions } from "@/components/post-actions";
 import { CommentsSection } from "@/components/comments-section";
@@ -16,21 +17,26 @@ interface PostDetailPageProps {
 
 export default function PostDetailPage({ params }: PostDetailPageProps) {
   const { id } = use(params);
-  const [post, setPost] = useState<Post | null | undefined>(undefined);
+  const [article, setArticle] = useState<ApiArticle | null | undefined>(undefined);
+  const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
 
   useEffect(() => {
-    const found = getPost(id);
-    if (!found) {
-      setPost(null);
-    } else {
-      setPost(found);
-      setComments(getComments(id));
+    const numericId = parseInt(id);
+    if (isNaN(numericId)) {
+      setArticle(null);
+      return;
     }
+    fetchArticle(numericId)
+      .then((a) => {
+        setArticle(a);
+        setPost(mapArticleToPost(a));
+        setComments((a.comments ?? []).map((c) => mapApiCommentToComment(c, a.id)));
+      })
+      .catch(() => setArticle(null));
   }, [id]);
 
-  // Not found state
-  if (post === null) {
+  if (article === null) {
     return (
       <div className="max-w-2xl mx-auto text-center py-20">
         <h1 className="text-2xl font-bold font-serif text-foreground mb-3">
@@ -50,8 +56,7 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
     );
   }
 
-  // Loading state
-  if (post === undefined) {
+  if (article === undefined || !post) {
     return (
       <div className="max-w-3xl mx-auto">
         <div className="animate-pulse space-y-4">
@@ -121,19 +126,26 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
             )}
           </div>
 
-          <PostActions post={post} />
+          <PostActions post={post} articleId={article.id} />
         </div>
       </header>
 
       <div className="prose-like space-y-5 text-foreground">
         {paragraphs.map((para, idx) => (
-          <p key={idx} className="text-[1.0625rem] leading-[1.75] text-foreground/90">
+          <p
+            key={idx}
+            className="text-[1.0625rem] leading-[1.75] text-foreground/90"
+          >
             {para}
           </p>
         ))}
       </div>
 
-      <CommentsSection postId={id} initialComments={comments} />
+      <CommentsSection
+        postId={id}
+        articleId={article.id}
+        initialComments={comments}
+      />
     </article>
   );
 }

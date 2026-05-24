@@ -1,4 +1,9 @@
-export type Category = "Tech" | "Lifestyle" | "Edukacja" | "Podróże" | "Zdrowie";
+export type Category = string;
+
+export interface Tag {
+  id: number;
+  name: string;
+}
 
 export interface Comment {
   id: string;
@@ -22,7 +27,7 @@ export interface Post {
 export const CATEGORIES: Category[] = [
   "Tech",
   "Lifestyle",
-  "Edukacja",
-  "Podróże",
-  "Zdrowie",
+  "Education",
+  "Travel",
+  "Health",
 ];
